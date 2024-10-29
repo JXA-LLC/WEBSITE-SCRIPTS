@@ -1,5 +1,8 @@
 gsap.registerPlugin(Observer);
 
+// Call the splittingjs to transform the data-splitting texts to spans of chars
+Splitting();
+
 const lerp = (a, b, n) => (1 - n) * a + n * b;
 
 const getCursorPos = (ev) => {
@@ -47,43 +50,71 @@ class Slide {
 let cursor = { x: 0, y: 0 };
 window.addEventListener("mousemove", (ev) => (cursor = getCursorPos(ev)));
 
+// Class representing a .cursor element
 class CursorText {
   // DOM elements
   DOM = {
+    // Main element (.cursor)
     el: null,
+    // Inner element (.cursor__text)
     text: null
   };
+  // Element style properties
   renderedStyles = {
+    // With interpolation, we can achieve a smooth animation effect when moving the cursor.
+    // The "previous" and "current" values are the values that will interpolate.
+    // The returned value will be one between these two (previous and current) at a specific increment.
+    // The "amt" is the amount to interpolate.
+    // As an example, the following formula calculates the x-axis translation value to apply to the cursor element:
+    // this.renderedStyles.tx.previous = lerp(this.renderedStyles.tx.previous, this.renderedStyles.tx.current, this.renderedStyles.tx.amt);
+
+    // translation values
+    // The lower the amt, the slower the cursor "follows" the user gesture
     tx: { previous: 0, current: 0, amt: 0.15 },
     ty: { previous: 0, current: 0, amt: 0.15 }
   };
+  // Element size and position
   bounds;
-  isVisible = true; // New flag for visibility control
 
   constructor(DOM_el) {
     this.DOM.el = DOM_el;
     this.DOM.text = this.DOM.el.querySelector(".cursor__text");
 
-    // Hide initially
+    // Hide it initially
     this.DOM.el.style.opacity = 0;
+
+    // Calculate size and position
     this.bounds = this.DOM.el.getBoundingClientRect();
 
+    for (const key in this.renderedStyles) {
+      this.renderedStyles[key].amt =
+        this.DOM.el.dataset.amt || this.renderedStyles[key].amt;
+    }
+
+    // Show the element and start tracking its position as soon as the user moves the cursor.
     const onMouseMoveEv = () => {
-      if (this.isVisible) { // Only show if visible
-        this.DOM.el.style.opacity = 1;
-        requestAnimationFrame(() => this.render());
-      }
+      // Set up the initial values to be the same
+      this.renderedStyles.tx.previous = this.renderedStyles.tx.current =
+        cursor.x + 20;
+      this.renderedStyles.ty.previous = this.renderedStyles.ty.previous =
+        cursor.y - this.bounds.height / 2;
+      // Show it
+      this.DOM.el.style.opacity = 1;
+      // Start rAF loop
+      requestAnimationFrame(() => this.render());
+      // Remove the initial mousemove event
       window.removeEventListener("mousemove", onMouseMoveEv);
     };
     window.addEventListener("mousemove", onMouseMoveEv);
   }
 
+  // Loop / Interpolation
   render() {
-    if (!this.isVisible) return; // Skip rendering if not visible
+    // New cursor positions
+    this.renderedStyles["tx"].current = cursor.x + 20;
+    this.renderedStyles["ty"].current = cursor.y - this.bounds.height / 2;
 
-    this.renderedStyles.tx.current = cursor.x + 20;
-    this.renderedStyles.ty.current = cursor.y - this.bounds.height / 2;
-
+    // Interpolation
     for (const key in this.renderedStyles) {
       this.renderedStyles[key].previous = lerp(
         this.renderedStyles[key].previous,
@@ -92,78 +123,11 @@ class CursorText {
       );
     }
 
-    this.DOM.el.style.transform = `translateX(${this.renderedStyles.tx.previous}px) translateY(${this.renderedStyles.ty.previous}px)`;
+    // Apply interpolated values (smooth effect)
+    this.DOM.el.style.transform = `translateX(${this.renderedStyles["tx"].previous}px) translateY(${this.renderedStyles["ty"].previous}px)`;
+
+    // loop...
     requestAnimationFrame(() => this.render());
-  }
-
-  hide() {
-    gsap.to(this.DOM.el, { opacity: 0, duration: 0.5 });
-    this.isVisible = false;
-  }
-
-  show() {
-    gsap.to(this.DOM.el, { opacity: 1, duration: 0.5 });
-    this.isVisible = true;
-  }
-}
-
-class CursorText {
-  // DOM elements
-  DOM = {
-    el: null,
-    text: null
-  };
-  renderedStyles = {
-    tx: { previous: 0, current: 0, amt: 0.15 },
-    ty: { previous: 0, current: 0, amt: 0.15 }
-  };
-  bounds;
-  isVisible = true; // New flag for visibility control
-
-  constructor(DOM_el) {
-    this.DOM.el = DOM_el;
-    this.DOM.text = this.DOM.el.querySelector(".cursor__text");
-
-    // Hide initially
-    this.DOM.el.style.opacity = 0;
-    this.bounds = this.DOM.el.getBoundingClientRect();
-
-    const onMouseMoveEv = () => {
-      if (this.isVisible) { // Only show if visible
-        this.DOM.el.style.opacity = 1;
-        requestAnimationFrame(() => this.render());
-      }
-      window.removeEventListener("mousemove", onMouseMoveEv);
-    };
-    window.addEventListener("mousemove", onMouseMoveEv);
-  }
-
-  render() {
-    if (!this.isVisible) return; // Skip rendering if not visible
-
-    this.renderedStyles.tx.current = cursor.x + 20;
-    this.renderedStyles.ty.current = cursor.y - this.bounds.height / 2;
-
-    for (const key in this.renderedStyles) {
-      this.renderedStyles[key].previous = lerp(
-        this.renderedStyles[key].previous,
-        this.renderedStyles[key].current,
-        this.renderedStyles[key].amt
-      );
-    }
-
-    this.DOM.el.style.transform = `translateX(${this.renderedStyles.tx.previous}px) translateY(${this.renderedStyles.ty.previous}px)`;
-    requestAnimationFrame(() => this.render());
-  }
-
-  hide() {
-    gsap.to(this.DOM.el, { opacity: 0, duration: 0.5 });
-    this.isVisible = false;
-  }
-
-  show() {
-    gsap.to(this.DOM.el, { opacity: 1, duration: 0.5 });
-    this.isVisible = true;
   }
 }
 
@@ -326,27 +290,37 @@ const toggleCursorBackTexts = (isContent) => {
   return gsap
     .timeline({
       onStart: () => {
-        // Hide cursor text and show back button based on the isContent flag
+        // Set initial opacity based on isContent
+        gsap.set(DOM.backChars, { opacity: isContent ? 0 : 1 });
         if (isContent) {
-          cursorTextInstance.hide(); // Hide cursor text when entering content
-          gsap.set(DOM.backCtrl, { display: 'inline-block', opacity: 0 });
-        } else {
-          cursorTextInstance.show(); // Show cursor text when exiting content
+          DOM.backCtrl.classList.add("frame__back--show");
         }
       },
       onComplete: () => {
-        // Only manage the display class for frame__back
+        DOM.backCtrl.classList[isContent ? "add" : "remove"](
+          "frame__back--show"
+        );
         if (!isContent) {
-          gsap.set(DOM.backCtrl, { display: 'none' });
+          DOM.backCtrl.classList.remove("frame__back--show");
         }
       }
     })
-    .to(DOM.backCtrl, {
-      duration: 0.5,
-      ease: "power1.inOut",
-      opacity: isContent ? 1 : 0 // Fade in/out for frame__back
-    });
+    .to(DOM.cursorChars, {
+      duration: 0.3, // Smooth fade effect
+      ease: "power2.inOut",
+      opacity: isContent ? 0 : 1 // Fades out cursor text if isContent is true
+    })
+    .to(
+      DOM.backChars,
+      {
+        duration: 0.3, // Sync fade with cursorChars
+        ease: "power2.inOut",
+        opacity: isContent ? 1 : 0 // Fades in back chars if isContent is true
+      },
+      0 // Start both animations at the same time
+    );
 };
+
 
 const showContent = (position) => {
   if (isAnimating) return;
