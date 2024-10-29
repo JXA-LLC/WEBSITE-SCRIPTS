@@ -302,16 +302,16 @@ const toggleCursorBackTexts = (isContent) => {
       }
     })
     .to(DOM.cursorChars, {
-      duration: 0.5,
+      duration: 0.5, // Smooth fade-in duration
       ease: "power1.inOut",
-      opacity: isContent ? 0 : 1
+      opacity: isContent ? 0 : 1 // Simple fade, no stagger
     })
     .to(
       DOM.backChars,
       {
-        duration: 0.5,
+        duration: 0.5, // Smooth fade-out duration
         ease: "power1.inOut",
-        opacity: isContent ? 1 : 0
+        opacity: isContent ? 1 : 0 // Simple fade, no stagger
       },
       0
     );
