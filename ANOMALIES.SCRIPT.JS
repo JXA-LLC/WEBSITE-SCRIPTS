@@ -287,31 +287,33 @@ const toggleCursorBackTexts = (isContent) => {
   return gsap
     .timeline({
       onStart: () => {
-        gsap.set(DOM.backChars, { opacity: isContent ? 0 : 1 });
+        // Set initial opacity and visibility
+        gsap.set(DOM.cursorChars, { opacity: isContent ? 0 : 1 });
+        gsap.set(DOM.backChars, { opacity: isContent ? 1 : 0 });
+        
+        // Show back button container if entering content
         if (isContent) {
           DOM.backCtrl.classList.add("frame__back--show");
         }
       },
       onComplete: () => {
-        DOM.backCtrl.classList[isContent ? "add" : "remove"](
-          "frame__back--show"
-        );
+        // Hide back button container if not in content view
         if (!isContent) {
           DOM.backCtrl.classList.remove("frame__back--show");
         }
       }
     })
     .to(DOM.cursorChars, {
-      duration: 0.5, // Smooth fade-in duration
+      duration: 0.5,
       ease: "power1.inOut",
-      opacity: isContent ? 0 : 1 // Simple fade, no stagger
+      opacity: isContent ? 0 : 1 // Hide cursor text when entering content
     })
     .to(
       DOM.backChars,
       {
-        duration: 0.5, // Smooth fade-out duration
+        duration: 0.5,
         ease: "power1.inOut",
-        opacity: isContent ? 1 : 0 // Simple fade, no stagger
+        opacity: isContent ? 1 : 0 // Show back button when entering content
       },
       0
     );
