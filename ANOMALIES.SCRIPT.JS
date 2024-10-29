@@ -1,8 +1,5 @@
 gsap.registerPlugin(Observer);
 
-// Call the splittingjs to transform the data-splitting texts to spans of chars
-Splitting();
-
 const lerp = (a, b, n) => (1 - n) * a + n * b;
 
 const getCursorPos = (ev) => {
@@ -305,26 +302,16 @@ const toggleCursorBackTexts = (isContent) => {
       }
     })
     .to(DOM.cursorChars, {
-      duration: 0.1,
-      ease: "expo",
-      opacity: isContent ? 0 : 1,
-      stagger: {
-        amount: 0.5,
-        grid: "auto",
-        from: "random"
-      }
+      duration: 0.5,
+      ease: "power1.inOut",
+      opacity: isContent ? 0 : 1
     })
     .to(
       DOM.backChars,
       {
-        duration: 0.1,
-        ease: "expo",
-        opacity: isContent ? 1 : 0,
-        stagger: {
-          amount: 0.5,
-          grid: "auto",
-          from: "random"
-        }
+        duration: 0.5,
+        ease: "power1.inOut",
+        opacity: isContent ? 1 : 0
       },
       0
     );
@@ -476,4 +463,3 @@ new CursorText(DOM.cursor);
 
 // Initialize the events
 initEvents();
-
