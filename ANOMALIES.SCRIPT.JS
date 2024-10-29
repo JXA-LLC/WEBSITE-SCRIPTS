@@ -290,7 +290,6 @@ const toggleCursorBackTexts = (isContent) => {
   return gsap
     .timeline({
       onStart: () => {
-        // Set initial opacity based on isContent
         gsap.set(DOM.backChars, { opacity: isContent ? 0 : 1 });
         if (isContent) {
           DOM.backCtrl.classList.add("frame__back--show");
@@ -306,21 +305,30 @@ const toggleCursorBackTexts = (isContent) => {
       }
     })
     .to(DOM.cursorChars, {
-      duration: 0.3, // Smooth fade effect
-      ease: "power2.inOut",
-      opacity: isContent ? 0 : 1 // Fades out cursor text if isContent is true
+      duration: 0.1,
+      ease: "expo",
+      opacity: isContent ? 0 : 1,
+      stagger: {
+        amount: 0.5,
+        grid: "auto",
+        from: "random"
+      }
     })
     .to(
       DOM.backChars,
       {
-        duration: 0.3, // Sync fade with cursorChars
-        ease: "power2.inOut",
-        opacity: isContent ? 1 : 0 // Fades in back chars if isContent is true
+        duration: 0.1,
+        ease: "expo",
+        opacity: isContent ? 1 : 0,
+        stagger: {
+          amount: 0.5,
+          grid: "auto",
+          from: "random"
+        }
       },
-      0 // Start both animations at the same time
+      0
     );
 };
-
 
 const showContent = (position) => {
   if (isAnimating) return;
